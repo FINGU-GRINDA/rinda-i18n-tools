@@ -33,7 +33,7 @@ export async function pullCommand(options: PullOptions): Promise<void> {
 
     const sheetName = getSheetName(config, options.app);
     const sheetsClient = new GoogleSheetsClient(config, sheetName);
-    const csvManager = new CsvManager(config, projectRoot);
+    const csvManager = new CsvManager(config, projectRoot, options.app);
 
     // Google Sheets 데이터 읽기
     const sheetRows = await sheetsClient.readData();

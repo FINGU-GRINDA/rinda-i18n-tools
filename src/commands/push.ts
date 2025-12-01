@@ -28,7 +28,7 @@ export async function pushCommand(options: PushOptions): Promise<void> {
 
     const sheetName = getSheetName(config, options.app);
     const sheetsClient = new GoogleSheetsClient(config, sheetName);
-    const csvManager = new CsvManager(config, projectRoot);
+    const csvManager = new CsvManager(config, projectRoot, options.app);
 
     // 로컬 CSV 읽기
     const localRows = csvManager.readAllLocalCSVs();

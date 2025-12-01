@@ -16,7 +16,12 @@ export async function buildCommand(options: BuildOptions): Promise<void> {
     console.log(chalk.blue("📦 Building JSON files from CSV..."));
 
     const { config, projectRoot } = await loadConfigWithContext();
-    const csvManager = new CsvManager(config, projectRoot);
+    const csvManager = new CsvManager(config, projectRoot, options.app);
+
+    if (options.app) {
+      console.log(chalk.gray(`   App: ${options.app}`));
+      console.log(chalk.gray(`   Source: ${csvManager.csvDir}`));
+    }
 
     await csvManager.buildJsonFromCsv();
   } catch (error) {

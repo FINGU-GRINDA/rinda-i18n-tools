@@ -24,7 +24,7 @@ export async function checkCommand(options: CheckOptions): Promise<void> {
       process.env.GOOGLE_SHEET_ID = options.sheetId;
     }
 
-    const csvManager = new CsvManager(config, projectRoot);
+    const csvManager = new CsvManager(config, projectRoot, options.app);
     const metadata = csvManager.readSyncMetadata();
 
     // 로컬 상태

@@ -16,13 +16,23 @@ export async function exportCommand(options: ExportOptions): Promise<void> {
   try {
     console.log(chalk.blue("📤 Exporting JSON files to CSV..."));
 
+    if (!options.app) {
+      throw new Error(
+        "App name is required for export.\n" +
+        "Example: pnpm i18n:export -- --app landing-page"
+      );
+    }
+
     const { config, projectRoot } = await loadConfigWithContext();
-    const csvManager = new CsvManager(config, projectRoot);
+    const csvManager = new CsvManager(config, projectRoot, options.app);
 
     const localePath = join(
       projectRoot,
       getLocalePathForApp(config, options.app),
     );
+
+    console.log(chalk.gray(`   Source: ${localePath}`));
+    console.log(chalk.gray(`   Target: ${csvManager.csvDir}`));
 
     await csvManager.exportCsvFromJson(localePath);
 

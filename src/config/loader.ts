@@ -154,11 +154,17 @@ export function getOutputDir(config: I18nConfig): string {
  * Google Sheets 시트 이름을 반환합니다
  */
 export function getSheetName(config: I18nConfig, fallback?: string): string {
-  return (
-    config.googleSheets?.sheetName ??
-    fallback ??
-    "translations"
-  );
+  const sheetName = config.googleSheets?.sheetName ?? fallback;
+  
+  if (!sheetName) {
+    throw new Error(
+      "Sheet name is required.\n" +
+      "Either set googleSheets.sheetName in i18n.config.ts or use --app option.\n" +
+      "Example: pnpm i18n:push -- --app landing-page"
+    );
+  }
+  
+  return sheetName;
 }
 
 /**

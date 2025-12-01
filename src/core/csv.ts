@@ -46,17 +46,24 @@ export interface SyncMetadata {
 export class CsvManager {
   private config: I18nConfig;
   private projectRoot: string;
+  private appName?: string;
 
-  constructor(config: I18nConfig, projectRoot: string) {
+  constructor(config: I18nConfig, projectRoot: string, appName?: string) {
     this.config = config;
     this.projectRoot = projectRoot;
+    this.appName = appName;
   }
 
   /**
    * CSV 디렉토리 절대 경로
+   * appName이 설정되어 있으면 앱별 서브폴더 경로 반환
    */
   get csvDir(): string {
-    return join(this.projectRoot, getCsvDir(this.config));
+    const baseCsvDir = join(this.projectRoot, getCsvDir(this.config));
+    if (this.appName) {
+      return join(baseCsvDir, this.appName);
+    }
+    return baseCsvDir;
   }
 
   /**
@@ -102,12 +109,14 @@ export class CsvManager {
 
   /**
    * CSV 파일 목록 가져오기
+   * appName이 설정되어 있으면 해당 앱 서브폴더 내의 모든 CSV 파일 반환
    */
   getCsvFiles(): string[] {
     if (!existsSync(this.csvDir)) {
       return [];
     }
 
+    // 앱 서브폴더 또는 기본 폴더 내의 모든 CSV 파일 반환
     return readdirSync(this.csvDir).filter(
       (file: string) => file.endsWith(".csv") && !file.startsWith("."),
     );

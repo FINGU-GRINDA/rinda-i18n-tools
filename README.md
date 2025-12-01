@@ -23,6 +23,9 @@ git submodule add https://github.com/FINGU-GRINDA/rinda-i18n-tools.git tools/i18
 
 # Install dependencies
 cd tools/i18n && pnpm install
+
+# For pnpm workspace (monorepo) - use --ignore-workspace
+cd tools/i18n && pnpm install --ignore-workspace
 ```
 
 ### For Existing Clones (After Adding Submodule)
