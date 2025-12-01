@@ -259,6 +259,7 @@ function mergeForTranslation(
     const targetValue = target[key];
 
     if (typeof sourceValue === "string") {
+      // 문자열: 타겟에 번역이 있고 한국어가 아니면 유지
       if (
         typeof targetValue === "string" &&
         targetValue !== sourceValue &&
@@ -268,11 +269,35 @@ function mergeForTranslation(
       } else {
         result[key] = sourceValue;
       }
+    } else if (Array.isArray(sourceValue)) {
+      // 배열: 각 요소를 재귀적으로 처리
+      const targetArray = Array.isArray(targetValue) ? targetValue : [];
+      result[key] = sourceValue.map((item, index) => {
+        if (typeof item === "string") {
+          const targetItem = targetArray[index];
+          if (
+            typeof targetItem === "string" &&
+            targetItem !== item &&
+            !containsKorean(targetItem)
+          ) {
+            return targetItem;
+          }
+          return item;
+        } else if (item !== null && typeof item === "object") {
+          return mergeForTranslation(
+            item as JsonObject,
+            (typeof targetArray[index] === "object" && targetArray[index] !== null
+              ? targetArray[index]
+              : {}) as JsonObject,
+          );
+        }
+        return item;
+      });
     } else if (
       sourceValue !== null &&
-      typeof sourceValue === "object" &&
-      !Array.isArray(sourceValue)
+      typeof sourceValue === "object"
     ) {
+      // 객체: 재귀 처리
       result[key] = mergeForTranslation(
         sourceValue as JsonObject,
         (typeof targetValue === "object" && targetValue !== null && !Array.isArray(targetValue)
