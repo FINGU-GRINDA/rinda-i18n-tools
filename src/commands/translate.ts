@@ -80,31 +80,52 @@ export async function translateCommand(options: TranslateOptions): Promise<void>
       return;
     }
 
-    // 예상 비용 계산
-    let totalStrings = 0;
+    // 예상 비용 계산 (실제로 번역이 필요한 문자열만 계산)
+    let totalStringsNeedingTranslation = 0;
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
     const SYSTEM_PROMPT_TOKENS = 200; // 시스템 프롬프트 약 200 토큰
+    const perLanguageStats: Record<string, number> = {};
 
-    for (const jsonFile of jsonFiles) {
-      const sourcePath = join(sourceDir, jsonFile);
-      const sourceContent = JSON.parse(readFileSync(sourcePath, "utf-8"));
-      const strings = collectStrings(sourceContent);
-      totalStrings += strings.length;
+    for (const targetLang of targetLanguages) {
+      const targetDir = join(localePath, targetLang);
+      let langStringsCount = 0;
 
-      for (const text of strings) {
-        // 각 문자열에 대한 토큰 계산
-        const inputTokens = SYSTEM_PROMPT_TOKENS + estimateTokens(text) + 20; // 20은 프롬프트 템플릿 토큰
-        const outputTokens = estimateTokens(text) * 1.2; // 출력은 입력보다 약간 길 수 있음
+      for (const jsonFile of jsonFiles) {
+        const sourcePath = join(sourceDir, jsonFile);
+        const targetPath = join(targetDir, jsonFile);
 
-        totalInputTokens += inputTokens;
-        totalOutputTokens += outputTokens;
+        const sourceContent = JSON.parse(readFileSync(sourcePath, "utf-8")) as JsonObject;
+
+        // 타겟 파일이 있으면 읽기
+        let targetContent: JsonObject = {};
+        if (existsSync(targetPath) && !options.force) {
+          try {
+            targetContent = JSON.parse(readFileSync(targetPath, "utf-8")) as JsonObject;
+          } catch {
+            // 파일 읽기 실패 시 빈 객체
+          }
+        }
+
+        // 병합 후 한국어가 남아있는 문자열만 번역 필요
+        const mergedContent = options.force
+          ? sourceContent
+          : mergeForTranslation(sourceContent, targetContent);
+
+        const stringsNeedingTranslation = collectStrings(mergedContent).filter(containsKorean);
+        langStringsCount += stringsNeedingTranslation.length;
+
+        for (const text of stringsNeedingTranslation) {
+          const inputTokens = SYSTEM_PROMPT_TOKENS + estimateTokens(text) + 20;
+          const outputTokens = estimateTokens(text) * 1.2;
+          totalInputTokens += inputTokens;
+          totalOutputTokens += outputTokens;
+        }
       }
-    }
 
-    // 각 언어에 대해 번역하므로 언어 수만큼 곱함
-    totalInputTokens *= targetLanguages.length;
-    totalOutputTokens *= targetLanguages.length;
+      perLanguageStats[targetLang] = langStringsCount;
+      totalStringsNeedingTranslation += langStringsCount;
+    }
 
     const estimatedTotalCost = estimateCost(totalInputTokens, totalOutputTokens);
     const estimatedKRW = Math.ceil(estimatedTotalCost * 1400);
@@ -115,14 +136,28 @@ export async function translateCommand(options: TranslateOptions): Promise<void>
     console.log(chalk.white("   Translation Summary:"));
     console.log(chalk.gray(`     Source: ${sourceDir}`));
     console.log(chalk.gray(`     Files to process: ${jsonFiles.length}`));
-    console.log(chalk.gray(`     Strings to translate: ${totalStrings}`));
     console.log(chalk.gray(`     Target languages: ${targetLanguages.length} (${targetLanguages.join(", ")})`));
-    console.log(chalk.gray(`     Estimated input tokens: ${totalInputTokens.toLocaleString()}`));
-    console.log(chalk.gray(`     Estimated output tokens: ${totalOutputTokens.toLocaleString()}`));
-    console.log(chalk.cyan(`     Estimated cost: $${estimatedTotalCost.toFixed(4)} (approximately ₩${estimatedKRW.toLocaleString()})`));
     console.log("");
-    console.log(chalk.gray("   Note: This is an estimate. Actual cost may vary slightly."));
+    console.log(chalk.white("   Strings needing translation:"));
+    for (const [lang, count] of Object.entries(perLanguageStats)) {
+      console.log(chalk.gray(`     ${lang}: ${count} strings`));
+    }
+    console.log(chalk.white(`     Total: ${totalStringsNeedingTranslation} strings`));
     console.log("");
+    if (totalStringsNeedingTranslation > 0) {
+      console.log(chalk.gray(`     Estimated input tokens: ${totalInputTokens.toLocaleString()}`));
+      console.log(chalk.gray(`     Estimated output tokens: ${Math.round(totalOutputTokens).toLocaleString()}`));
+      console.log(chalk.cyan(`     Estimated cost: $${estimatedTotalCost.toFixed(4)} (approximately ₩${estimatedKRW.toLocaleString()})`));
+    } else {
+      console.log(chalk.green("     ✅ All translations are up to date!"));
+    }
+    console.log("");
+
+    // 번역이 필요 없으면 종료
+    if (totalStringsNeedingTranslation === 0) {
+      console.log(chalk.green("✅ Nothing to translate. All files are up to date."));
+      return;
+    }
 
     // 비용 확인 (--yes 옵션이 없으면)
     if (!options.yes && !options.dryRun) {
