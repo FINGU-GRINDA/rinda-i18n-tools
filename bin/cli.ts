@@ -56,8 +56,10 @@ program
 program
   .command("translate")
   .description("Translate locale files using OpenAI")
-  .requiredOption("-t, --target <locale>", "Target language code (e.g., en, ja, zh-CN)")
-  .option("-a, --app <name>", "App name for monorepo")
+  .option("-t, --target <locale>", "Target language code (e.g., en, ja, zh-CN)")
+  .option("--app <name>", "App name for monorepo")
+  .option("-a, --all", "Translate to all configured languages (except source)")
+  .option("-y, --yes", "Skip cost confirmation prompt")
   .option("-f, --force", "Force overwrite existing translations")
   .option("-d, --dry-run", "Preview without making changes")
   .action(translateCommand);
@@ -99,4 +101,3 @@ program
   .action(watchCommand);
 
 program.parse();
-
