@@ -16,8 +16,20 @@ Universal i18n management tool for Rinda projects. Supports AI-powered translati
 ### As Git Submodule (Recommended)
 
 ```bash
-# Add as submodule
-git submodule add git@github.com:rinda/rinda-i18n-tools.git tools/i18n
+# Add as submodule (SSH)
+git submodule add git@github.com:FINGU-GRINDA/rinda-i18n-tools.git tools/i18n
+# Or using HTTPS
+git submodule add https://github.com/FINGU-GRINDA/rinda-i18n-tools.git tools/i18n
+
+# Install dependencies
+cd tools/i18n && pnpm install
+```
+
+### For Existing Clones (After Adding Submodule)
+
+```bash
+# Initialize and update submodules
+git submodule update --init --recursive
 
 # Install dependencies
 cd tools/i18n && pnpm install
@@ -26,7 +38,7 @@ cd tools/i18n && pnpm install
 ### Direct Clone
 
 ```bash
-git clone git@github.com:rinda/rinda-i18n-tools.git
+git clone https://github.com/FINGU-GRINDA/rinda-i18n-tools.git
 cd rinda-i18n-tools
 pnpm install
 ```
@@ -299,7 +311,27 @@ Using gpt-4o-mini (2025 pricing):
 
 Typical project translation: **~$0.01-$0.05 per language**
 
+## Submodule Management
+
+### Update Submodule to Latest
+
+```bash
+cd tools/i18n
+git pull origin main
+cd ../..
+git add tools/i18n
+git commit -m "chore: update i18n tools"
+```
+
+### Remove Submodule
+
+```bash
+git submodule deinit -f tools/i18n
+rm -rf .git/modules/tools/i18n
+git rm -f tools/i18n
+```
+
 ## License
 
-Private - Rinda AI
+Private - FINGU-GRINDA
 
