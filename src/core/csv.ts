@@ -194,6 +194,8 @@ export class CsvManager {
 
   /**
    * CSV → JSON 변환 (빌드)
+   * 각 CSV 파일별로 언어별 폴더에 JSON 파일 생성
+   * 예: csv/index.csv, csv/shared.csv → ko/index.json, ko/shared.json, en/index.json, en/shared.json
    */
   async buildJsonFromCsv(): Promise<void> {
     const csvFiles = this.getCsvFiles();
@@ -203,13 +205,7 @@ export class CsvManager {
       return;
     }
 
-    // 언어별 번역 객체 초기화
-    const translations: Record<string, Record<string, unknown>> = {};
-    for (const lang of this.languages) {
-      translations[lang] = {};
-    }
-
-    // 각 CSV 파일 처리
+    // 각 CSV 파일별로 처리
     for (const csvFile of csvFiles) {
       const csvPath = join(this.csvDir, csvFile);
       const namespace = basename(csvFile, ".csv");
@@ -221,33 +217,37 @@ export class CsvManager {
         trim: true,
       }) as LocalTranslationRow[];
 
+      // 언어별 번역 객체 초기화 (이 CSV 파일에 대해서만)
+      const translations: Record<string, Record<string, unknown>> = {};
+      for (const lang of this.languages) {
+        translations[lang] = {};
+      }
+
       for (const record of records) {
         const key = record.key;
         if (!key) continue;
 
-        const fullKey = `${namespace}.${key}`;
-
         for (const lang of this.languages) {
           const value = record[lang];
           if (value) {
-            setNestedValue(translations[lang], fullKey, value);
+            setNestedValue(translations[lang], key, value);
           }
         }
       }
-    }
 
-    // 출력 디렉토리 생성
-    await ensureDir(this.outputDir);
+      // 각 언어별 폴더에 JSON 파일 저장
+      for (const lang of this.languages) {
+        const langDir = join(this.outputDir, lang);
+        await ensureDir(langDir);
 
-    // JSON 파일 저장
-    for (const lang of this.languages) {
-      const outputPath = join(this.outputDir, `${lang}.json`);
-      writeFileSync(
-        outputPath,
-        JSON.stringify(translations[lang], null, 2),
-        "utf-8",
-      );
-      console.log(`✅ Generated: ${outputPath}`);
+        const outputPath = join(langDir, `${namespace}.json`);
+        writeFileSync(
+          outputPath,
+          JSON.stringify(translations[lang], null, 2),
+          "utf-8",
+        );
+        console.log(`✅ Generated: ${outputPath}`);
+      }
     }
 
     console.log(
