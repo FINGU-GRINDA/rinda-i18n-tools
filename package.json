@@ -1,0 +1,44 @@
+{
+  "name": "rinda-i18n-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Universal i18n tools for Rinda projects - supports AI translation, CSV/JSON conversion, Google Sheets sync",
+  "main": "src/index.ts",
+  "bin": {
+    "i18n": "bin/cli.ts"
+  },
+  "scripts": {
+    "scan": "tsx bin/cli.ts scan",
+    "build": "tsx bin/cli.ts build",
+    "export": "tsx bin/cli.ts export",
+    "translate": "tsx bin/cli.ts translate",
+    "push": "tsx bin/cli.ts push",
+    "pull": "tsx bin/cli.ts pull",
+    "check": "tsx bin/cli.ts check",
+    "watch": "tsx bin/cli.ts watch",
+    "init": "tsx bin/cli.ts init",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "chokidar": "^3.6.0",
+    "commander": "^12.1.0",
+    "csv-parse": "^5.5.6",
+    "csv-stringify": "^6.5.2",
+    "dotenv": "^16.4.7",
+    "google-auth-library": "^9.15.0",
+    "googleapis": "^144.0.0",
+    "openai": "^4.77.0",
+    "ora": "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+
