@@ -152,19 +152,25 @@ export function getOutputDir(config: I18nConfig): string {
 
 /**
  * Google Sheets 시트 이름을 반환합니다
+ * 
+ * @param config 설정 객체
+ * @param fallback 폴백 값 (보통 --app 옵션 값)
+ * @param isMonorepo 모노레포 여부
  */
-export function getSheetName(config: I18nConfig, fallback?: string): string {
+export function getSheetName(config: I18nConfig, fallback?: string, isMonorepo?: boolean): string {
   const sheetName = config.googleSheets?.sheetName ?? fallback;
   
-  if (!sheetName) {
+  // 모노레포인데 sheetName이 없으면 에러
+  if (isMonorepo && !sheetName) {
     throw new Error(
-      "Sheet name is required.\n" +
+      "Sheet name is required for monorepo.\n" +
       "Either set googleSheets.sheetName in i18n.config.ts or use --app option.\n" +
       "Example: pnpm i18n:push -- --app landing-page"
     );
   }
   
-  return sheetName;
+  // 단일 프로젝트인 경우 기본값 사용
+  return sheetName ?? "translations";
 }
 
 /**

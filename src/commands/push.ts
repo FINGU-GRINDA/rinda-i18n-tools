@@ -26,7 +26,10 @@ export async function pushCommand(options: PushOptions): Promise<void> {
       process.env.GOOGLE_SHEET_ID = options.sheetId;
     }
 
-    const sheetName = getSheetName(config, options.app);
+    // 모노레포 여부 확인
+    const isMonorepo = config.apps && Object.keys(config.apps).length > 0;
+
+    const sheetName = getSheetName(config, options.app, isMonorepo);
     const sheetsClient = new GoogleSheetsClient(config, sheetName);
     const csvManager = new CsvManager(config, projectRoot, options.app);
 

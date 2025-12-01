@@ -16,14 +16,19 @@ export async function exportCommand(options: ExportOptions): Promise<void> {
   try {
     console.log(chalk.blue("📤 Exporting JSON files to CSV..."));
 
-    if (!options.app) {
+    const { config, projectRoot } = await loadConfigWithContext();
+    
+    // 모노레포 여부 확인: apps 설정이 있으면 모노레포
+    const isMonorepo = config.apps && Object.keys(config.apps).length > 0;
+    
+    if (isMonorepo && !options.app) {
       throw new Error(
-        "App name is required for export.\n" +
-        "Example: pnpm i18n:export -- --app landing-page"
+        "App name is required for monorepo export.\n" +
+        "Example: pnpm i18n:export -- --app landing-page\n" +
+        `Available apps: ${Object.keys(config.apps || {}).join(", ")}`
       );
     }
 
-    const { config, projectRoot } = await loadConfigWithContext();
     const csvManager = new CsvManager(config, projectRoot, options.app);
 
     const localePath = join(

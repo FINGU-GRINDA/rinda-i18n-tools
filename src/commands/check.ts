@@ -24,6 +24,9 @@ export async function checkCommand(options: CheckOptions): Promise<void> {
       process.env.GOOGLE_SHEET_ID = options.sheetId;
     }
 
+    // 모노레포 여부 확인
+    const isMonorepo = config.apps && Object.keys(config.apps).length > 0;
+
     const csvManager = new CsvManager(config, projectRoot, options.app);
     const metadata = csvManager.readSyncMetadata();
 
@@ -59,7 +62,7 @@ export async function checkCommand(options: CheckOptions): Promise<void> {
 
     if (hasGoogleConfig) {
       try {
-        const sheetName = getSheetName(config, options.app);
+        const sheetName = getSheetName(config, options.app, isMonorepo);
         const sheetsClient = new GoogleSheetsClient(config, sheetName);
 
         const sheetRowCount = await sheetsClient.getRowCount();
