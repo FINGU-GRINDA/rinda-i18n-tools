@@ -102,17 +102,34 @@ GOOGLE_SHEET_ID=your-spreadsheet-id
 GOOGLE_CREDENTIALS='{"type":"service_account",...}'
 ```
 
-### 4. Add Scripts to package.json
+### 4. Configure TypeScript (Important!)
+
+Add `tools` to exclude in `tsconfig.json` to prevent build errors:
+
+```json
+{
+  "compilerOptions": {
+    // ... your options
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "tools"]
+}
+```
+
+> ⚠️ **Required for Next.js projects** - Without this, the build will fail with "Cannot find module 'rinda-i18n-tools'" error.
+
+### 5. Add Scripts to package.json
 
 ```json
 {
   "scripts": {
     "i18n:build": "tsx tools/i18n/bin/cli.ts build",
-    "i18n:scan": "tsx tools/i18n/bin/cli.ts scan --merge",
+    "i18n:export": "tsx tools/i18n/bin/cli.ts export",
     "i18n:translate": "tsx tools/i18n/bin/cli.ts translate",
     "i18n:push": "tsx tools/i18n/bin/cli.ts push",
     "i18n:pull": "tsx tools/i18n/bin/cli.ts pull",
     "i18n:check": "tsx tools/i18n/bin/cli.ts check",
+    "i18n:scan": "tsx tools/i18n/bin/cli.ts scan --merge",
     "i18n:watch": "tsx tools/i18n/bin/cli.ts watch"
   }
 }
@@ -127,6 +144,8 @@ GOOGLE_CREDENTIALS='{"type":"service_account",...}'
 | `i18n export` | Export JSON locale files to CSV |
 | `i18n scan` | Scan source code for translation keys |
 | `i18n translate -t <lang>` | AI translate to target language |
+| `i18n translate -a` | AI translate to ALL configured languages |
+| `i18n translate -a -y` | Translate all, skip cost confirmation |
 | `i18n push` | Upload to Google Sheets |
 | `i18n pull` | Download from Google Sheets |
 | `i18n check` | Check sync status |
@@ -157,22 +176,90 @@ i18n push --sheet-id YOUR_SHEET_ID
 i18n watch --csv
 ```
 
-## Directory Structure
+## Project Types
 
+### Single Project
+
+For standalone projects without monorepo structure:
+
+```typescript
+// i18n.config.ts
+export default defineConfig({
+  localePath: "src/messages/locales",  // JSON locale files
+  csvDir: "csv",                        // CSV files stored here
+  languages: ["ko", "en", "ja"],
+  sourceLanguage: "ko",
+});
+```
+
+**Directory Structure:**
 ```
 your-project/
-├── i18n.config.ts          # Configuration file
-├── .env                    # Environment variables
-├── locales/                # CSV files
+├── i18n.config.ts
+├── csv/                    # CSV files (no subfolders)
 │   ├── common.csv
 │   ├── pages.csv
-│   └── .i18n-sync.json     # Sync metadata
-├── src/i18n/
-│   └── generated/          # Built JSON files
-│       ├── ko.json
-│       ├── en.json
-│       └── ja.json
-└── tools/i18n/             # This tool (submodule)
+│   └── .i18n-sync.json
+├── src/messages/locales/
+│   ├── ko/
+│   │   └── common.json
+│   └── en/
+│       └── common.json
+└── tools/i18n/
+```
+
+**Usage:**
+```bash
+# No --app flag needed
+pnpm i18n:export
+pnpm i18n:push
+pnpm i18n:pull
+```
+
+### Monorepo
+
+For monorepo with multiple apps:
+
+```typescript
+// i18n.config.ts
+export default defineConfig({
+  apps: {
+    "landing-page": "apps/landing-page/src/messages/locales",
+    "frontend": "apps/frontend/public/locales",
+    "company-page": "apps/company-page/src/messages/locales",
+  },
+  csvDir: "csv",  // CSV files in csv/{appName}/ folders
+  languages: ["ko", "en", "ja"],
+  sourceLanguage: "ko",
+});
+```
+
+**Directory Structure:**
+```
+monorepo/
+├── i18n.config.ts
+├── csv/
+│   ├── landing-page/       # Per-app CSV folders
+│   │   ├── index.csv
+│   │   └── shared.csv
+│   ├── company-page/
+│   │   └── company.csv
+│   └── .i18n-sync.json
+├── apps/
+│   ├── landing-page/
+│   │   └── src/messages/locales/
+│   └── company-page/
+│       └── src/messages/locales/
+└── tools/i18n/
+```
+
+**Usage:**
+```bash
+# --app flag required for monorepo
+pnpm i18n:export -- --app landing-page
+pnpm i18n:push -- --app landing-page
+pnpm i18n:pull -- --app company-page
+pnpm i18n:translate -- --app landing-page -a
 ```
 
 ## CSV Format
@@ -261,13 +348,26 @@ git commit -m "chore: update translations"
 ### AI Translation
 
 ```bash
-# Translate to all languages
+# Translate to specific language
 i18n translate --target en
 i18n translate --target ja
-i18n translate --target zh-CN
 
-# Force re-translate
+# Translate to ALL configured languages (except source)
+i18n translate --all
+# or short form
+i18n translate -a
+
+# Skip cost confirmation prompt
+i18n translate -a -y
+
+# Preview cost without translating
+i18n translate -a --dry-run
+
+# Force re-translate existing translations
 i18n translate --target en --force
+
+# For monorepo
+i18n translate --app landing-page -a -y
 ```
 
 ## Development Mode
