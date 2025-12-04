@@ -81,6 +81,27 @@ export class CsvManager {
   }
 
   /**
+   * JSON 문자열인 경우 파싱하여 원래 형태로 복원
+   * 배열이나 객체 형태의 JSON 문자열을 파싱하고, 일반 문자열은 그대로 반환
+   */
+  private parseJsonValue(value: string): unknown {
+    // JSON 배열 또는 객체 형태인지 확인
+    const trimmed = value.trim();
+    if (
+      (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+      (trimmed.startsWith("{") && trimmed.endsWith("}"))
+    ) {
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        // 파싱 실패시 원래 문자열 반환
+        return value;
+      }
+    }
+    return value;
+  }
+
+  /**
    * CSV 파일들의 해시값 계산 (변경 감지용)
    */
   calculateLocalHash(): string {
@@ -230,7 +251,9 @@ export class CsvManager {
         for (const lang of this.languages) {
           const value = record[lang];
           if (value) {
-            setNestedValue(translations[lang], key, value);
+            // JSON 문자열인 경우 파싱하여 원래 형태로 복원
+            const parsedValue = this.parseJsonValue(value);
+            setNestedValue(translations[lang], key, parsedValue);
           }
         }
       }
@@ -307,7 +330,14 @@ export class CsvManager {
                   break;
                 }
               }
-              row[lang] = typeof value === "string" ? value : "";
+              // 배열이나 객체는 JSON 문자열로 직렬화
+              if (typeof value === "string") {
+                row[lang] = value;
+              } else if (value !== undefined && value !== null) {
+                row[lang] = JSON.stringify(value);
+              } else {
+                row[lang] = "";
+              }
             } catch {
               row[lang] = "";
             }
