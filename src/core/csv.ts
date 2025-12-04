@@ -158,7 +158,7 @@ export class CsvManager {
         const records = parse(csvContent, {
           columns: true,
           skip_empty_lines: true,
-          trim: true,
+          trim: false, // 의도적인 공백 보존
         }) as LocalTranslationRow[];
 
         const filename = csvFile.replace(".csv", "");
@@ -168,6 +168,8 @@ export class CsvManager {
         const dedupedRecords: LocalTranslationRow[] = [];
 
         for (const record of records) {
+          // key는 trim (공백 키는 의미 없음)
+          record.key = record.key?.trim() ?? "";
           if (seenKeys.has(record.key)) {
             console.warn(
               `⚠️  Warning: Duplicate key "${record.key}" found in ${csvFile}`,
@@ -235,7 +237,7 @@ export class CsvManager {
       const records = parse(csvContent, {
         columns: true,
         skip_empty_lines: true,
-        trim: true,
+        trim: false, // 의도적인 공백 보존 (후행 공백 등)
       }) as LocalTranslationRow[];
 
       // 언어별 번역 객체 초기화 (이 CSV 파일에 대해서만)
@@ -245,12 +247,14 @@ export class CsvManager {
       }
 
       for (const record of records) {
-        const key = record.key;
+        // key는 trim (공백 키는 의미 없음)
+        const key = record.key?.trim();
         if (!key) continue;
 
         for (const lang of this.languages) {
           const value = record[lang];
-          if (value) {
+          // 빈 문자열도 의도적인 값이므로 포함 (undefined만 제외)
+          if (value !== undefined) {
             // JSON 문자열인 경우 파싱하여 원래 형태로 복원
             const parsedValue = this.parseJsonValue(value);
             setNestedValue(translations[lang], key, parsedValue);
