@@ -159,6 +159,7 @@ export class CsvManager {
           columns: true,
           skip_empty_lines: true,
           trim: false, // 의도적인 공백 보존
+          relax_column_count: true, // 일부 언어만 번역된 행 허용
         }) as LocalTranslationRow[];
 
         const filename = csvFile.replace(".csv", "");
@@ -238,6 +239,7 @@ export class CsvManager {
         columns: true,
         skip_empty_lines: true,
         trim: false, // 의도적인 공백 보존 (후행 공백 등)
+        relax_column_count: true, // 일부 언어만 번역된 행 허용
       }) as LocalTranslationRow[];
 
       // 언어별 번역 객체 초기화 (이 CSV 파일에 대해서만)
