@@ -24,7 +24,7 @@
     "chalk": "^5.4.1",
     "chokidar": "^3.6.0",
     "commander": "^12.1.0",
-    "csv-parse": "^5.5.6",
+    "csv-parse": "^7.0.2",
     "csv-stringify": "^6.5.2",
     "dotenv": "^16.4.7",
     "google-auth-library": "^9.15.0",
